@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import { useParams } from "react-router-dom";
 
 // const socket = io("http://localhost:5000"); // Update to deployed backend URL when needed
-const socket = io("https://your-backend.onrender.com");
+const socket = io("https://whiteboard-backend-0wlm.onrender.com");
 const Whiteboard = () => {
     const [strokes, setStrokes] = useState([]);
   const canvasRef = useRef(null);
