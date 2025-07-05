@@ -60,9 +60,12 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("start-draw", { offsetX, offsetY, color });
   });
 
-  socket.on("draw", ({ roomId, data }) => {
-    socket.to(roomId).emit("draw", data);
-  });
+  // socket.on("draw", ({ roomId, data }) => {
+  //   socket.to(roomId).emit("draw", data);
+  // });
+  socket.on("draw", ({ roomId, offsetX, offsetY, color }) => {
+  socket.to(roomId).emit("draw", { offsetX, offsetY, color });
+});
 
   socket.on("disconnect", () => {
     console.log("❌ User disconnected:", socket.id);
