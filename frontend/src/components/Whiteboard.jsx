@@ -180,6 +180,9 @@ useEffect(() => {
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+  onTouchMove={draw}
+  onTouchEnd={stopDrawing}
       />
     </div>
   );
