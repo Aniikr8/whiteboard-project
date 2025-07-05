@@ -21,6 +21,19 @@ app.post("/api/save", (req, res) => {
   const sql = "INSERT INTO drawings (room_id, data) VALUES (?, ?)";
 
   db.query(sql, [roomId, jsonData], (err, result) => {
+  //   if (err) {
+  //     console.error("❌ Error saving drawing:", err);
+  //     return res.status(500).json({ message: "Save failed" });
+  //   }
+  //   res.json({ message: "Drawing saved" });
+  // });
+     if (err) {
+    console.error("Connection error:", err);
+    return res.status(500).json({ message: "DB connection failed" });
+  }
+
+  connection.query(sql, [roomId, jsonData], (err, result) => {
+    connection.release(); // Always release the connection back to the pool
     if (err) {
       console.error("❌ Error saving drawing:", err);
       return res.status(500).json({ message: "Save failed" });
