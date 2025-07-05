@@ -42,8 +42,7 @@ const Whiteboard = () => {
     };
 
     const handleClearCanvas = () => {
-      const ctx = canvasRef.current.getContext("2d");
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       setStrokes([]);
     };
 
@@ -80,6 +79,7 @@ const Whiteboard = () => {
     ctx.beginPath();
     ctx.moveTo(offsetX, offsetY);
     setDrawing(true);
+
     socket.emit("start-draw", { roomId, offsetX, offsetY, color });
   };
 
@@ -88,6 +88,7 @@ const Whiteboard = () => {
     const { offsetX, offsetY } = getOffset(event);
     const ctx = canvasRef.current.getContext("2d");
     const drawColor = tool === "pen" ? color : "#ffffff";
+
     ctx.strokeStyle = drawColor;
     ctx.lineTo(offsetX, offsetY);
     ctx.stroke();
@@ -98,19 +99,22 @@ const Whiteboard = () => {
 
   const stopDrawing = () => {
     setDrawing(false);
-    canvasRef.current.getContext("2d").closePath();
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.closePath();
   };
 
   const saveDrawing = async () => {
     try {
-      const response = await fetch("https://whiteboard-backend-0wlm.onrender.com/api/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ roomId, data: strokes }),
-      });
-
+      const response = await fetch(
+        "https://whiteboard-backend-0wlm.onrender.com/api/save",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ roomId, data: strokes }),
+        }
+      );
       const result = await response.json();
       alert(result.message || "Saved");
     } catch (err) {
@@ -123,13 +127,15 @@ const Whiteboard = () => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setStrokes([]);
-   socket.emit("clear-canvas", { roomId });
+    socket.emit("clear-canvas", roomId);
   };
 
   useEffect(() => {
     const loadDrawing = async () => {
       try {
-        const res = await fetch(`https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`);
+        const res = await fetch(
+          `https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`
+        );
         const savedStrokes = await res.json();
         const ctx = canvasRef.current.getContext("2d");
 
@@ -209,4 +215,5 @@ const Whiteboard = () => {
 };
 
 export default Whiteboard;
+
 
