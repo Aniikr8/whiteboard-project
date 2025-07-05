@@ -19,10 +19,8 @@ const Whiteboard = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-
     ctx.lineCap = "round";
     ctx.lineWidth = 3;
   }, []);
@@ -44,7 +42,8 @@ const Whiteboard = () => {
     };
 
     const handleClearCanvas = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const ctx = canvasRef.current.getContext("2d");
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       setStrokes([]);
     };
 
@@ -81,7 +80,6 @@ const Whiteboard = () => {
     ctx.beginPath();
     ctx.moveTo(offsetX, offsetY);
     setDrawing(true);
-
     socket.emit("start-draw", { roomId, offsetX, offsetY, color });
   };
 
@@ -89,24 +87,18 @@ const Whiteboard = () => {
     if (!drawing) return;
     const { offsetX, offsetY } = getOffset(event);
     const ctx = canvasRef.current.getContext("2d");
-    ctx.strokeStyle = tool === "pen" ? color : "#ffffff";
+    const drawColor = tool === "pen" ? color : "#ffffff";
+    ctx.strokeStyle = drawColor;
     ctx.lineTo(offsetX, offsetY);
     ctx.stroke();
 
-    socket.emit("draw", {
-      roomId,
-      offsetX,
-      offsetY,
-      color: tool === "pen" ? color : "#ffffff",
-    });
-
-    setStrokes((prev) => [...prev, { offsetX, offsetY, color }]);
+    socket.emit("draw", { roomId, offsetX, offsetY, color: drawColor });
+    setStrokes((prev) => [...prev, { offsetX, offsetY, color: drawColor }]);
   };
 
   const stopDrawing = () => {
     setDrawing(false);
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.closePath();
+    canvasRef.current.getContext("2d").closePath();
   };
 
   const saveDrawing = async () => {
@@ -148,7 +140,6 @@ const Whiteboard = () => {
             ctx.lineTo(point.offsetX, point.offsetY);
             ctx.stroke();
           });
-
           setStrokes(savedStrokes);
         }
       } catch (err) {
@@ -218,3 +209,4 @@ const Whiteboard = () => {
 };
 
 export default Whiteboard;
+
