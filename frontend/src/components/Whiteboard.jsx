@@ -104,7 +104,7 @@ const Whiteboard = () => {
 
   const saveDrawing = async () => {
     try {
-      const response = await fetch("https://whiteboard-backend-0wlm.onrender.com/api/save", {
+     const response = await fetch("http://localhost:5000/api/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,8 @@ const Whiteboard = () => {
   useEffect(() => {
     const loadDrawing = async () => {
       try {
-        const res = await fetch(`https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`);
+        // const res = await fetch(`https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`);
+             const res = await fetch(`http://localhost:5000/api/load/${roomId}`);
         const savedStrokes = await res.json();
         const ctx = canvasRef.current.getContext("2d");
 
