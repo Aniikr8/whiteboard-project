@@ -89,10 +89,16 @@ const draw = (event) => {
   ctx.lineTo(offsetX, offsetY);
   ctx.stroke();
 
-  socket.emit("draw", {
-    roomId,
-    data: { offsetX, offsetY, color: tool === "pen" ? color : "#ffffff" },
-  });
+  // socket.emit("draw", {
+  //   roomId,
+  //   data: { offsetX, offsetY, color: tool === "pen" ? color : "#ffffff" },
+  // });
+    socket.emit("draw", {
+  roomId,
+  offsetX,
+  offsetY,
+  color: tool === "pen" ? color : "#ffffff"
+});
 
   setStrokes((prev) => [...prev, { offsetX, offsetY, color }]);
 };
