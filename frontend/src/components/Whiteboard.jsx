@@ -55,39 +55,47 @@ const [tool, setTool] = useState("pen");
     };
   }, []);
 
-  // Local start drawing
-  const startDrawing = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = nativeEvent;
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.beginPath();
-    ctx.moveTo(offsetX, offsetY);
-    setDrawing(true);
+ const getOffset = (event) => {
+  if (event.nativeEvent.touches) {
+    const touch = event.nativeEvent.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top,
+    };
+  } else {
+    return {
+      offsetX: event.nativeEvent.offsetX,
+      offsetY: event.nativeEvent.offsetY,
+    };
+  }
+};
 
-    socket.emit("start-draw", {
-      roomId,
-      offsetX,
-      offsetY,
-      color,
-    });
-  };
+const startDrawing = (event) => {
+  const { offsetX, offsetY } = getOffset(event);
+  const ctx = canvasRef.current.getContext("2d");
+  ctx.beginPath();
+  ctx.moveTo(offsetX, offsetY);
+  setDrawing(true);
 
-  // Local draw
-  const draw = ({ nativeEvent }) => {
-    if (!drawing) return;
-    const { offsetX, offsetY } = nativeEvent;
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.strokeStyle = tool === "pen" ? color : "#ffffff"; 
-    ctx.lineTo(offsetX, offsetY);
-    ctx.stroke();
+  socket.emit("start-draw", { roomId, offsetX, offsetY, color });
+};
 
-    socket.emit("draw", {
-      roomId,
-      data: { offsetX, offsetY,  color: tool === "pen" ? color : "#ffffff" },
-    });
+const draw = (event) => {
+  if (!drawing) return;
+  const { offsetX, offsetY } = getOffset(event);
+  const ctx = canvasRef.current.getContext("2d");
+  ctx.strokeStyle = tool === "pen" ? color : "#ffffff";
+  ctx.lineTo(offsetX, offsetY);
+  ctx.stroke();
 
-    setStrokes((prev) => [...prev, { offsetX, offsetY, color }]);
+  socket.emit("draw", {
+    roomId,
+    data: { offsetX, offsetY, color: tool === "pen" ? color : "#ffffff" },
+  });
 
-  };
+  setStrokes((prev) => [...prev, { offsetX, offsetY, color }]);
+};
 
   // Stop drawing
   const stopDrawing = () => {
