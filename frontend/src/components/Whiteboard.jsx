@@ -43,12 +43,19 @@ const Whiteboard = () => {
       ctx.stroke();
     };
 
+    const handleClearCanvas = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setStrokes([]);
+    };
+
     socket.on("start-draw", handleStartDraw);
     socket.on("draw", handleDraw);
+    socket.on("clear-canvas", handleClearCanvas);
 
     return () => {
       socket.off("start-draw", handleStartDraw);
       socket.off("draw", handleDraw);
+      socket.off("clear-canvas", handleClearCanvas);
     };
   }, []);
 
@@ -104,7 +111,7 @@ const Whiteboard = () => {
 
   const saveDrawing = async () => {
     try {
-   const response = await fetch("https://whiteboard-backend-0wlm.onrender.com/api/save", {
+      const response = await fetch("http://localhost:5000/api/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,11 +127,17 @@ const Whiteboard = () => {
     }
   };
 
+  const clearCanvas = () => {
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    setStrokes([]);
+    socket.emit("clear-canvas", roomId);
+  };
+
   useEffect(() => {
     const loadDrawing = async () => {
       try {
-        const res = await fetch(`https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`);
-             // const res = await fetch(`http://localhost:5000/api/load/${roomId}`);
+        const res = await fetch(`http://localhost:5000/api/load/${roomId}`);
         const savedStrokes = await res.json();
         const ctx = canvasRef.current.getContext("2d");
 
@@ -158,16 +171,27 @@ const Whiteboard = () => {
 
         <button
           onClick={() => setTool("pen")}
-          className={`px-3 py-1 rounded ${tool === "pen" ? "bg-blue-600 text-white" : "bg-white border"}`}
+          className={`px-3 py-1 rounded ${
+            tool === "pen" ? "bg-blue-600 text-white" : "bg-white border"
+          }`}
         >
           Pen
         </button>
 
         <button
           onClick={() => setTool("eraser")}
-          className={`px-3 py-1 rounded ${tool === "eraser" ? "bg-red-600 text-white" : "bg-white border"}`}
+          className={`px-3 py-1 rounded ${
+            tool === "eraser" ? "bg-red-600 text-white" : "bg-white border"
+          }`}
         >
           Eraser
+        </button>
+
+        <button
+          onClick={clearCanvas}
+          className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600"
+        >
+          Clear
         </button>
       </div>
 
@@ -194,4 +218,3 @@ const Whiteboard = () => {
 };
 
 export default Whiteboard;
-
