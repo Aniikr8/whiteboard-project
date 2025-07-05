@@ -72,7 +72,9 @@ io.on("connection", (socket) => {
   socket.on("start-draw", ({ roomId, offsetX, offsetY, color }) => {
     socket.to(roomId).emit("start-draw", { offsetX, offsetY, color });
   });
-
+socket.on("clear-canvas", (roomId) => {
+  socket.to(roomId).emit("clear-canvas");
+});
   // socket.on("draw", ({ roomId, data }) => {
   //   socket.to(roomId).emit("draw", data);
   // });
