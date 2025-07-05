@@ -123,7 +123,7 @@ const Whiteboard = () => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setStrokes([]);
-    socket.emit("clear-canvas", roomId);
+   socket.emit("clear-canvas", { roomId });
   };
 
   useEffect(() => {
