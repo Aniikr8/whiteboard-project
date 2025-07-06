@@ -71,8 +71,8 @@ whiteboard/
 
 ## 📦 Clone the Repository
 
-``` git clone https://github.com/Aniikr8/cwhiteboard-project.git ```
-```cd collab-whiteboard ```
+``` git clone https://github.com/Aniikr8/whiteboard-project.git ```
+```cd whiteboard ```
 
 
 
@@ -80,7 +80,7 @@ whiteboard/
 
 Navigate to the `backend` directory and install the required Node.js dependencies:
 
-```cd backend npm install ```
+```cd backend   npm install ```
 
 ```npm start```
 
