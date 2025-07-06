@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import io from "socket.io-client";
 import { useParams } from "react-router-dom";
 
-const socket = io("https://whiteboard-backend-0wlm.onrender.com"); // Update to your backend URL
+const socket = io("https://whiteboard-backend-0wlm.onrender.com");
 
 const Whiteboard = () => {
   const [strokes, setStrokes] = useState([]);
@@ -12,24 +12,19 @@ const Whiteboard = () => {
   const [tool, setTool] = useState("pen");
   const { roomId } = useParams();
 
-  // Join room
   useEffect(() => {
     socket.emit("join-room", roomId);
   }, [roomId]);
 
-  // Setup canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-
     ctx.lineCap = "round";
     ctx.lineWidth = 3;
   }, []);
 
-  // Load saved drawing
   useEffect(() => {
     const loadDrawing = async () => {
       try {
@@ -53,9 +48,9 @@ const Whiteboard = () => {
     loadDrawing();
   }, [roomId]);
 
-  // Listen for drawing and clearing events
   useEffect(() => {
-    const ctx = canvasRef.current.getContext("2d");
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
     const handleStartDraw = (data) => {
       ctx.beginPath();
@@ -70,7 +65,7 @@ const Whiteboard = () => {
     };
 
     const handleClearCanvas = () => {
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       setStrokes([]);
     };
 
@@ -85,9 +80,26 @@ const Whiteboard = () => {
     };
   }, []);
 
-  // Local drawing
-  const startDrawing = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = nativeEvent;
+  const getOffset = (event) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+
+    if (event.touches && event.touches.length > 0) {
+      const touch = event.touches[0];
+      return {
+        offsetX: touch.clientX - rect.left,
+        offsetY: touch.clientY - rect.top,
+      };
+    } else {
+      return {
+        offsetX: event.nativeEvent.offsetX,
+        offsetY: event.nativeEvent.offsetY,
+      };
+    }
+  };
+
+  const startDrawing = (event) => {
+    const { offsetX, offsetY } = getOffset(event);
     const ctx = canvasRef.current.getContext("2d");
     ctx.beginPath();
     ctx.moveTo(offsetX, offsetY);
@@ -101,18 +113,21 @@ const Whiteboard = () => {
     });
   };
 
-  const draw = ({ nativeEvent }) => {
+  const draw = (event) => {
     if (!drawing) return;
-    const { offsetX, offsetY } = nativeEvent;
+    const { offsetX, offsetY } = getOffset(event);
     const ctx = canvasRef.current.getContext("2d");
     const strokeColor = tool === "pen" ? color : "#ffffff";
+
     ctx.strokeStyle = strokeColor;
     ctx.lineTo(offsetX, offsetY);
     ctx.stroke();
 
     socket.emit("draw", {
       roomId,
-      data: { offsetX, offsetY, color: strokeColor },
+      offsetX,
+      offsetY,
+      color: strokeColor,
     });
 
     setStrokes((prev) => [...prev, { offsetX, offsetY, color: strokeColor }]);
@@ -196,6 +211,7 @@ const Whiteboard = () => {
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full touch-none"
+        style={{ touchAction: "none" }}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
