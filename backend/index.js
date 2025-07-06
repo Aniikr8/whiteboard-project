@@ -74,9 +74,9 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("start-draw", { offsetX, offsetY, color });
   });
 
-  socket.on("draw", ({ roomId, data }) => {
-    socket.to(roomId).emit("draw", data);
-  });
+ socket.on("draw", ({ roomId, offsetX, offsetY, color }) => {
+  socket.to(roomId).emit("draw", { offsetX, offsetY, color });
+});
 
   // 🔄 Clear canvas event (real-time)
   socket.on("clear-canvas", (roomId) => {
