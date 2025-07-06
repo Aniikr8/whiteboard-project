@@ -3,6 +3,8 @@
 A real-time collaborative whiteboard built with **React**, **Node.js**, **Socket.IO**, and **MySQL**. Multiple users can draw, erase, and share a room to work together on a whiteboard live!
 
 ## 🔗 Live Demo
+https://whiteboard-project-lv8y.vercel.app/
+
 - **Frontend**: [Deployed on Vercel](https://whiteboard-project-lv8y.vercel.app/)
 - **Backend**: [Deployed on Render](https://whiteboard-backend-0wlm.onrender.com)
 - **Database**: [FreeSQLDatabase.com](https://www.freesqldatabase.com)
@@ -69,17 +71,37 @@ whiteboard/
 
 ## 📦 Clone the Repository
 
-```bash
-git clone https://github.com/Aniikr8/cwhiteboard-project.git
-cd collab-whiteboard
+``` git clone https://github.com/Aniikr8/cwhiteboard-project.git ```
+```cd collab-whiteboard ```
+
+
 
 ## Install Dependencies
 
 Navigate to the `backend` directory and install the required Node.js dependencies:
 
-```bash
-cd backend
-npm install
+```cd backend npm install ```
+
+```npm start```
+
+## 🎨 Frontend Setup (/frontend)
+Navigate to the `frontend` directory and install the required dependencies:
+```cd frontend ```
+```npm install```  
+```npm run dev```
+
+## 🛠️ How to Use
+
+1. Visit http://localhost:5173/room123
+
+2. Draw using pen/eraser tools
+
+3. Click Save to store drawing in MySQL
+
+4. Join the same room from another device to collaborate
+
+5. Click Clear to clear the whiteboard (real-time)
+
 
 
 
