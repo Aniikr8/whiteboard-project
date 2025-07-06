@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import io from "socket.io-client";
 import { useParams } from "react-router-dom";
 
-const socket = io("https://whiteboard-backend-0wlm.onrender.com");
+const socket = io("https://whiteboard-backend-0wlm.onrender.com"); // Update to your backend URL
 
 const Whiteboard = () => {
   const [strokes, setStrokes] = useState([]);
@@ -12,22 +12,50 @@ const Whiteboard = () => {
   const [tool, setTool] = useState("pen");
   const { roomId } = useParams();
 
+  // Join room
   useEffect(() => {
     socket.emit("join-room", roomId);
   }, [roomId]);
 
+  // Setup canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
+
     ctx.lineCap = "round";
     ctx.lineWidth = 3;
   }, []);
 
+  // Load saved drawing
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const loadDrawing = async () => {
+      try {
+        const res = await fetch(`https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`);
+        const savedStrokes = await res.json();
+        const ctx = canvasRef.current.getContext("2d");
+
+        ctx.beginPath();
+        savedStrokes.forEach((point) => {
+          ctx.strokeStyle = point.color;
+          ctx.lineTo(point.offsetX, point.offsetY);
+          ctx.stroke();
+        });
+
+        setStrokes(savedStrokes);
+      } catch (err) {
+        console.error("Error loading drawing:", err);
+      }
+    };
+
+    loadDrawing();
+  }, [roomId]);
+
+  // Listen for drawing and clearing events
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext("2d");
 
     const handleStartDraw = (data) => {
       ctx.beginPath();
@@ -42,7 +70,7 @@ const Whiteboard = () => {
     };
 
     const handleClearCanvas = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       setStrokes([]);
     };
 
@@ -57,44 +85,37 @@ const Whiteboard = () => {
     };
   }, []);
 
-  const getOffset = (event) => {
-    if (event.nativeEvent.touches) {
-      const touch = event.nativeEvent.touches[0];
-      const rect = canvasRef.current.getBoundingClientRect();
-      return {
-        offsetX: touch.clientX - rect.left,
-        offsetY: touch.clientY - rect.top,
-      };
-    } else {
-      return {
-        offsetX: event.nativeEvent.offsetX,
-        offsetY: event.nativeEvent.offsetY,
-      };
-    }
-  };
-
-  const startDrawing = (event) => {
-    const { offsetX, offsetY } = getOffset(event);
+  // Local drawing
+  const startDrawing = ({ nativeEvent }) => {
+    const { offsetX, offsetY } = nativeEvent;
     const ctx = canvasRef.current.getContext("2d");
     ctx.beginPath();
     ctx.moveTo(offsetX, offsetY);
     setDrawing(true);
 
-    socket.emit("start-draw", { roomId, offsetX, offsetY, color });
+    socket.emit("start-draw", {
+      roomId,
+      offsetX,
+      offsetY,
+      color,
+    });
   };
 
-  const draw = (event) => {
+  const draw = ({ nativeEvent }) => {
     if (!drawing) return;
-    const { offsetX, offsetY } = getOffset(event);
+    const { offsetX, offsetY } = nativeEvent;
     const ctx = canvasRef.current.getContext("2d");
-    const drawColor = tool === "pen" ? color : "#ffffff";
-
-    ctx.strokeStyle = drawColor;
+    const strokeColor = tool === "pen" ? color : "#ffffff";
+    ctx.strokeStyle = strokeColor;
     ctx.lineTo(offsetX, offsetY);
     ctx.stroke();
 
-    socket.emit("draw", { roomId, offsetX, offsetY, color: drawColor });
-    setStrokes((prev) => [...prev, { offsetX, offsetY, color: drawColor }]);
+    socket.emit("draw", {
+      roomId,
+      data: { offsetX, offsetY, color: strokeColor },
+    });
+
+    setStrokes((prev) => [...prev, { offsetX, offsetY, color: strokeColor }]);
   };
 
   const stopDrawing = () => {
@@ -105,16 +126,14 @@ const Whiteboard = () => {
 
   const saveDrawing = async () => {
     try {
-      const response = await fetch(
-        "https://whiteboard-backend-0wlm.onrender.com/api/save",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ roomId, data: strokes }),
-        }
-      );
+      const response = await fetch("https://whiteboard-backend-0wlm.onrender.com/api/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roomId, data: strokes }),
+      });
+
       const result = await response.json();
       alert(result.message || "Saved");
     } catch (err) {
@@ -129,32 +148,6 @@ const Whiteboard = () => {
     setStrokes([]);
     socket.emit("clear-canvas", roomId);
   };
-
-  useEffect(() => {
-    const loadDrawing = async () => {
-      try {
-        const res = await fetch(
-          `https://whiteboard-backend-0wlm.onrender.com/api/load/${roomId}`
-        );
-        const savedStrokes = await res.json();
-        const ctx = canvasRef.current.getContext("2d");
-
-        if (savedStrokes.length > 0) {
-          ctx.beginPath();
-          savedStrokes.forEach((point) => {
-            ctx.strokeStyle = point.color;
-            ctx.lineTo(point.offsetX, point.offsetY);
-            ctx.stroke();
-          });
-          setStrokes(savedStrokes);
-        }
-      } catch (err) {
-        console.error("Error loading drawing:", err);
-      }
-    };
-
-    loadDrawing();
-  }, [roomId]);
 
   return (
     <div className="relative w-full h-screen">
@@ -183,21 +176,22 @@ const Whiteboard = () => {
         >
           Eraser
         </button>
+      </div>
 
+      <div className="absolute top-4 right-4 z-10 flex space-x-2">
+        <button
+          onClick={saveDrawing}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+        >
+          Save
+        </button>
         <button
           onClick={clearCanvas}
-          className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600"
+          className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700"
         >
           Clear
         </button>
       </div>
-
-      <button
-        onClick={saveDrawing}
-        className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow z-10 hover:bg-blue-700"
-      >
-        Save
-      </button>
 
       <canvas
         ref={canvasRef}
@@ -215,5 +209,3 @@ const Whiteboard = () => {
 };
 
 export default Whiteboard;
-
-
