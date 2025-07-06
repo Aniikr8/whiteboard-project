@@ -39,7 +39,16 @@ You can use [FreeSQLDatabase.com](https://www.freesqldatabase.com) for free MySQ
 
 ### Table Schema
 
-sql
+db.js <br>
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "whiteboard",
+});
+
+<br>
+sql<br>
 CREATE TABLE drawings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   room_id VARCHAR(255) NOT NULL,
