@@ -21,19 +21,6 @@ app.post("/api/save", (req, res) => {
   const sql = "INSERT INTO drawings (room_id, data) VALUES (?, ?)";
 
   db.query(sql, [roomId, jsonData], (err, result) => {
-  //   if (err) {
-  //     console.error("❌ Error saving drawing:", err);
-  //     return res.status(500).json({ message: "Save failed" });
-  //   }
-  //   res.json({ message: "Drawing saved" });
-  // });
-     if (err) {
-    console.error("Connection error:", err);
-    return res.status(500).json({ message: "DB connection failed" });
-  }
-
-  connection.query(sql, [roomId, jsonData], (err, result) => {
-    connection.release(); // Always release the connection back to the pool
     if (err) {
       console.error("❌ Error saving drawing:", err);
       return res.status(500).json({ message: "Save failed" });
@@ -60,7 +47,21 @@ app.get("/api/load/:roomId", (req, res) => {
   });
 });
 
-// Socket.io setup (unchanged)
+// ⚙️ Optional: Clear drawing data for a room (if you want to also clear DB)
+app.delete("/api/clear/:roomId", (req, res) => {
+  const roomId = req.params.roomId;
+  const sql = "DELETE FROM drawings WHERE room_id = ?";
+
+  db.query(sql, [roomId], (err, result) => {
+    if (err) {
+      console.error("❌ Error clearing drawing:", err);
+      return res.status(500).json({ message: "Clear failed" });
+    }
+    res.json({ message: "Drawing cleared" });
+  });
+});
+
+// ⚙️ Socket.io setup
 io.on("connection", (socket) => {
   console.log("✅ User connected:", socket.id);
 
@@ -72,15 +73,16 @@ io.on("connection", (socket) => {
   socket.on("start-draw", ({ roomId, offsetX, offsetY, color }) => {
     socket.to(roomId).emit("start-draw", { offsetX, offsetY, color });
   });
-socket.on("clear-canvas", (roomId) => {
-  socket.to(roomId).emit("clear-canvas");
-});
-  // socket.on("draw", ({ roomId, data }) => {
-  //   socket.to(roomId).emit("draw", data);
-  // });
-  socket.on("draw", ({ roomId, offsetX, offsetY, color }) => {
-  socket.to(roomId).emit("draw", { offsetX, offsetY, color });
-});
+
+  socket.on("draw", ({ roomId, data }) => {
+    socket.to(roomId).emit("draw", data);
+  });
+
+  // 🔄 Clear canvas event (real-time)
+  socket.on("clear-canvas", (roomId) => {
+    socket.to(roomId).emit("clear-canvas");
+    console.log(`🧹 Canvas cleared in room ${roomId}`);
+  });
 
   socket.on("disconnect", () => {
     console.log("❌ User disconnected:", socket.id);
@@ -88,4 +90,6 @@ socket.on("clear-canvas", (roomId) => {
 });
 
 const PORT = 5000;
-server.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+server.listen(PORT, () =>
+  console.log(`🚀 Server running at http://localhost:${PORT}`)
+);
